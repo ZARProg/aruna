@@ -17,15 +17,22 @@ interface ReservationsProps {
   reservations: Reservation[];
   rooms: Room[];
   onAddReservation: (reservation: Omit<Reservation, 'id' | 'createdAt'>) => void;
+  onUpdateReservation?: (reservationId: string, updatedReservation: Partial<Reservation>) => void;
+  onDeleteReservation?: (reservationId: string) => void;
 }
 
 export const Reservations: React.FC<ReservationsProps> = ({ 
   reservations, 
   rooms, 
-  onAddReservation 
+  onAddReservation,
+  onUpdateReservation,
+  onDeleteReservation
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [formData, setFormData] = useState({
     guest: '',
     email: '',
@@ -36,6 +43,16 @@ export const Reservations: React.FC<ReservationsProps> = ({
     specialRequests: ''
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [editFormData, setEditFormData] = useState({
+    guest: '',
+    email: '',
+    phone: '',
+    checkIn: '',
+    checkOut: '',
+    roomId: '',
+    status: 'confirmed' as Reservation['status'],
+    specialRequests: ''
+  });
 
   const filteredReservations = reservations.filter(reservation =>
     reservation.guest.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -280,6 +297,36 @@ export const Reservations: React.FC<ReservationsProps> = ({
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusColors[reservation.status]}`}>
                           {statusLabels[reservation.status]}
                         </span>
+                        <div className="flex justify-center lg:justify-start space-x-2 mt-2">
+                          <button 
+                            onClick={() => {
+                              setSelectedReservation(reservation);
+                              setEditFormData({
+                                guest: reservation.guest,
+                                email: reservation.email,
+                                phone: reservation.phone,
+                                checkIn: reservation.checkIn,
+                                checkOut: reservation.checkOut,
+                                roomId: reservation.roomId,
+                                status: reservation.status,
+                                specialRequests: ''
+                              });
+                              setShowEditModal(true);
+                            }}
+                            className="p-1 bg-[#C0E6BA] text-[#013237] rounded hover:bg-[#a8d4a2] transition-colors"
+                          >
+                            <Edit3 className="h-3 w-3" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedReservation(reservation);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-1 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -519,6 +566,169 @@ export const Reservations: React.FC<ReservationsProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Reservation Modal */}
+      {showEditModal && selectedReservation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 lg:p-6 border-b border-[#C0E6BA] rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-[#013237]">Edit Reservasi</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 lg:p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Nama Tamu
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.guest}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, guest: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  No. Telepon
+                </label>
+                <input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Check-in
+                  </label>
+                  <input
+                    type="date"
+                    value={editFormData.checkIn}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, checkIn: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Check-out
+                  </label>
+                  <input
+                    type="date"
+                    value={editFormData.checkOut}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, checkOut: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Status
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value as Reservation['status'] }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                >
+                  <option value="confirmed">Dikonfirmasi</option>
+                  <option value="pending">Pending</option>
+                  <option value="cancelled">Dibatalkan</option>
+                </select>
+              </div>
+              
+              <div className="flex space-x-4 pt-4">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (onUpdateReservation && selectedReservation) {
+                      onUpdateReservation(selectedReservation.id, {
+                        guest: editFormData.guest,
+                        email: editFormData.email,
+                        phone: editFormData.phone,
+                        checkIn: editFormData.checkIn,
+                        checkOut: editFormData.checkOut,
+                        status: editFormData.status
+                      });
+                      setShowEditModal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-[#4CA771] text-white rounded-lg hover:bg-[#3d8a5d] transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Reservation Modal */}
+      {showDeleteModal && selectedReservation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#013237] text-center mb-2">
+                Hapus Reservasi?
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                Reservasi atas nama {selectedReservation.guest} akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
+              </p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (onDeleteReservation && selectedReservation) {
+                      onDeleteReservation(selectedReservation.id);
+                      setShowDeleteModal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -15,10 +15,31 @@ import { Guest } from '../App';
 
 interface GuestsProps {
   guests: Guest[];
+  onAddGuest?: (guest: Omit<Guest, 'id'>) => void;
+  onUpdateGuest?: (guestId: string, updatedGuest: Partial<Guest>) => void;
+  onDeleteGuest?: (guestId: string) => void;
 }
 
-export const Guests: React.FC<GuestsProps> = ({ guests }) => {
+export const Guests: React.FC<GuestsProps> = ({ guests, onAddGuest, onUpdateGuest, onDeleteGuest }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [addFormData, setAddFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    status: 'active' as Guest['status']
+  });
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    status: 'active' as Guest['status']
+  });
 
   const filteredGuests = guests.filter(guest =>
     guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -42,7 +63,10 @@ export const Guests: React.FC<GuestsProps> = ({ guests }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl lg:text-3xl font-bold text-[#013237]">Manajemen Tamu</h1>
-        <button className="bg-[#4CA771] text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-[#3d8a5d] transition-colors">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-[#4CA771] text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-[#3d8a5d] transition-colors"
+        >
           <Plus className="h-5 w-5" />
           <span>Tambah Tamu</span>
         </button>
@@ -179,13 +203,45 @@ export const Guests: React.FC<GuestsProps> = ({ guests }) => {
                       </div>
                       
                       <div className="flex space-x-2">
-                        <button className="p-2 bg-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#a8d4a2] transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedGuest(guest);
+                            setEditFormData({
+                              name: guest.name,
+                              email: guest.email,
+                              phone: guest.phone,
+                              address: guest.address || '',
+                              status: guest.status
+                            });
+                            setShowEditModal(true);
+                          }}
+                          className="p-2 bg-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#a8d4a2] transition-colors"
+                        >
                           <Eye className="h-4 w-4" />
                         </button>
-                        <button className="p-2 bg-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#a8d4a2] transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedGuest(guest);
+                            setEditFormData({
+                              name: guest.name,
+                              email: guest.email,
+                              phone: guest.phone,
+                              address: guest.address || '',
+                              status: guest.status
+                            });
+                            setShowEditModal(true);
+                          }}
+                          className="p-2 bg-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#a8d4a2] transition-colors"
+                        >
                           <Edit3 className="h-4 w-4" />
                         </button>
-                        <button className="p-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors">
+                        <button 
+                          onClick={() => {
+                            setSelectedGuest(guest);
+                            setShowDeleteModal(true);
+                          }}
+                          className="p-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -197,6 +253,270 @@ export const Guests: React.FC<GuestsProps> = ({ guests }) => {
           </div>
         </div>
       </div>
+
+      {/* Add Guest Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 lg:p-6 border-b border-[#C0E6BA] rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-[#013237]">Tambah Tamu Baru</h3>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 lg:p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  value={addFormData.name}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  placeholder="Masukkan nama lengkap"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={addFormData.email}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  placeholder="Masukkan email"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  No. Telepon
+                </label>
+                <input
+                  type="tel"
+                  value={addFormData.phone}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  placeholder="Masukkan no. telepon"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Alamat
+                </label>
+                <textarea
+                  value={addFormData.address}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, address: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  placeholder="Masukkan alamat"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Status
+                </label>
+                <select
+                  value={addFormData.status}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, status: e.target.value as Guest['status'] }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                >
+                  <option value="active">Aktif</option>
+                  <option value="vip">VIP</option>
+                  <option value="inactive">Tidak Aktif</option>
+                </select>
+              </div>
+              
+              <div className="flex space-x-4 pt-4">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (onAddGuest) {
+                      const newGuest: Omit<Guest, 'id'> = {
+                        ...addFormData,
+                        joinDate: new Date().toISOString().split('T')[0],
+                        totalReservations: 0,
+                        totalSpent: 0,
+                        lastVisit: '-'
+                      };
+                      onAddGuest(newGuest);
+                      setAddFormData({
+                        name: '',
+                        email: '',
+                        phone: '',
+                        address: '',
+                        status: 'active'
+                      });
+                      setShowAddModal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-[#4CA771] text-white rounded-lg hover:bg-[#3d8a5d] transition-colors"
+                >
+                  Tambah Tamu
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Guest Modal */}
+      {showEditModal && selectedGuest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 lg:p-6 border-b border-[#C0E6BA] rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-[#013237]">Edit Tamu</h3>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 lg:p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Nama Lengkap
+                </label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  No. Telepon
+                </label>
+                <input
+                  type="tel"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Alamat
+                </label>
+                <textarea
+                  value={editFormData.address}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, address: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Status
+                </label>
+                <select
+                  value={editFormData.status}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value as Guest['status'] }))}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                >
+                  <option value="active">Aktif</option>
+                  <option value="vip">VIP</option>
+                  <option value="inactive">Tidak Aktif</option>
+                </select>
+              </div>
+              
+              <div className="flex space-x-4 pt-4">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (onUpdateGuest && selectedGuest) {
+                      onUpdateGuest(selectedGuest.id, editFormData);
+                      setShowEditModal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-[#4CA771] text-white rounded-lg hover:bg-[#3d8a5d] transition-colors"
+                >
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Guest Modal */}
+      {showDeleteModal && selectedGuest && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#013237] text-center mb-2">
+                Hapus Tamu {selectedGuest.name}?
+              </h3>
+              <p className="text-gray-600 text-center mb-6">
+                Tindakan ini tidak dapat dibatalkan. Data tamu dan reservasi terkait akan dihapus secara permanen.
+              </p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    if (onDeleteGuest && selectedGuest) {
+                      onDeleteGuest(selectedGuest.id);
+                      setShowDeleteModal(false);
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

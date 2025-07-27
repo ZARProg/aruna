@@ -18,19 +18,31 @@ import { Room } from '../App';
 
 interface RoomsProps {
   rooms: Room[];
+  onAddRoom?: (room: Omit<Room, 'id'>) => void;
   onUpdateRoom?: (roomId: string, updatedRoom: Partial<Room>) => void;
   onDeleteRoom?: (roomId: string) => void;
 }
 
-export const Rooms: React.FC<RoomsProps> = ({ rooms, onUpdateRoom, onDeleteRoom }) => {
+export const Rooms: React.FC<RoomsProps> = ({ rooms, onAddRoom, onUpdateRoom, onDeleteRoom }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [editFormData, setEditFormData] = useState({
     number: '',
     type: '',
+    price: '',
+    status: 'available' as Room['status'],
+    capacity: '',
+    description: '',
+    amenities: [] as string[]
+  });
+
+  const [addFormData, setAddFormData] = useState({
+    number: '',
+    type: 'Superior',
     price: '',
     status: 'available' as Room['status'],
     capacity: '',
@@ -126,12 +138,52 @@ export const Rooms: React.FC<RoomsProps> = ({ rooms, onUpdateRoom, onDeleteRoom 
     }));
   };
 
+  const handleAddRoom = () => {
+    if (!onAddRoom) return;
+
+    const newRoom: Omit<Room, 'id'> = {
+      number: addFormData.number,
+      type: addFormData.type,
+      price: parseInt(addFormData.price),
+      status: addFormData.status,
+      capacity: parseInt(addFormData.capacity),
+      description: addFormData.description,
+      amenities: addFormData.amenities
+    };
+
+    onAddRoom(newRoom);
+    
+    // Reset form
+    setAddFormData({
+      number: '',
+      type: 'Superior',
+      price: '',
+      status: 'available',
+      capacity: '',
+      description: '',
+      amenities: []
+    });
+    setShowAddModal(false);
+  };
+
+  const handleAddAmenityToggle = (amenityId: string) => {
+    setAddFormData(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenityId)
+        ? prev.amenities.filter(a => a !== amenityId)
+        : [...prev.amenities, amenityId]
+    }));
+  };
+
   return (
     <>
       <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl lg:text-3xl font-bold text-[#013237]">Manajemen Kamar</h1>
-        <button className="bg-[#4CA771] text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-[#3d8a5d] transition-colors">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-[#4CA771] text-white px-4 py-2 rounded-lg flex items-center justify-center space-x-2 hover:bg-[#3d8a5d] transition-colors"
+        >
           <Plus className="h-5 w-5" />
           <span>Tambah Kamar</span>
         </button>
@@ -399,6 +451,148 @@ export const Rooms: React.FC<RoomsProps> = ({ rooms, onUpdateRoom, onDeleteRoom 
                 >
                   <Save className="h-4 w-4" />
                   <span>Simpan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Room Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 lg:p-6 border-b border-[#C0E6BA] rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-[#013237]">Tambah Kamar Baru</h3>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-4 lg:p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Nomor Kamar
+                  </label>
+                  <input
+                    type="text"
+                    value={addFormData.number}
+                    onChange={(e) => setAddFormData(prev => ({ ...prev, number: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                    placeholder="Contoh: 101"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Tipe Kamar
+                  </label>
+                  <select
+                    value={addFormData.type}
+                    onChange={(e) => setAddFormData(prev => ({ ...prev, type: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  >
+                    <option value="Superior">Superior</option>
+                    <option value="Deluxe">Deluxe</option>
+                    <option value="Suite">Suite</option>
+                    <option value="Presidential">Presidential</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Harga per Malam (Rp)
+                  </label>
+                  <input
+                    type="number"
+                    value={addFormData.price}
+                    onChange={(e) => setAddFormData(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                    placeholder="Contoh: 800000"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Kapasitas
+                  </label>
+                  <input
+                    type="number"
+                    value={addFormData.capacity}
+                    onChange={(e) => setAddFormData(prev => ({ ...prev, capacity: e.target.value }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                    placeholder="Contoh: 2"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#013237] mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={addFormData.status}
+                    onChange={(e) => setAddFormData(prev => ({ ...prev, status: e.target.value as Room['status'] }))}
+                    className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  >
+                    <option value="available">Tersedia</option>
+                    <option value="occupied">Terisi</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-1">
+                  Deskripsi
+                </label>
+                <textarea
+                  value={addFormData.description}
+                  onChange={(e) => setAddFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-[#C0E6BA] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA771]"
+                  placeholder="Deskripsi kamar..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-[#013237] mb-2">
+                  Fasilitas
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {availableAmenities.map((amenity) => (
+                    <label key={amenity.id} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={addFormData.amenities.includes(amenity.id)}
+                        onChange={() => handleAddAmenityToggle(amenity.id)}
+                        className="rounded border-[#C0E6BA] text-[#4CA771] focus:ring-[#4CA771]"
+                      />
+                      <amenity.icon className="h-4 w-4 text-[#4CA771]" />
+                      <span className="text-sm text-[#013237]">{amenity.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex space-x-4 pt-4">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-4 py-2 border border-[#C0E6BA] text-[#013237] rounded-lg hover:bg-[#C0E6BA] hover:bg-opacity-20 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleAddRoom}
+                  className="flex-1 px-4 py-2 bg-[#4CA771] text-white rounded-lg hover:bg-[#3d8a5d] transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Tambah Kamar</span>
                 </button>
               </div>
             </div>

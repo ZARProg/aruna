@@ -207,6 +207,59 @@ function App() {
     setReservations(prev => prev.filter(reservation => reservation.roomId !== roomId));
   };
 
+  const addRoom = (newRoom: Omit<Room, 'id'>) => {
+    const room: Room = {
+      ...newRoom,
+      id: Date.now().toString()
+    };
+    setRooms(prev => [...prev, room]);
+  };
+
+  const updateGuest = (guestId: string, updatedGuest: Partial<Guest>) => {
+    setGuests(prev => prev.map(guest => 
+      guest.id === guestId 
+        ? { ...guest, ...updatedGuest }
+        : guest
+    ));
+  };
+
+  const deleteGuest = (guestId: string) => {
+    setGuests(prev => prev.filter(guest => guest.id !== guestId));
+    
+    // Also remove any reservations for this guest
+    setReservations(prev => prev.filter(reservation => reservation.guestId !== guestId));
+  };
+
+  const addGuest = (newGuest: Omit<Guest, 'id'>) => {
+    const guest: Guest = {
+      ...newGuest,
+      id: Date.now().toString()
+    };
+    setGuests(prev => [...prev, guest]);
+  };
+
+  const updateReservation = (reservationId: string, updatedReservation: Partial<Reservation>) => {
+    setReservations(prev => prev.map(reservation => 
+      reservation.id === reservationId 
+        ? { ...reservation, ...updatedReservation }
+        : reservation
+    ));
+  };
+
+  const deleteReservation = (reservationId: string) => {
+    const reservation = reservations.find(r => r.id === reservationId);
+    if (reservation) {
+      // Update room status back to available
+      setRooms(prev => prev.map(room => 
+        room.id === reservation.roomId 
+          ? { ...room, status: 'available' as const }
+          : room
+      ));
+    }
+    
+    setReservations(prev => prev.filter(reservation => reservation.id !== reservationId));
+  };
+
   const renderActivePage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -217,12 +270,14 @@ function App() {
             reservations={reservations}
             rooms={rooms}
             onAddReservation={addReservation}
+            onUpdateReservation={updateReservation}
+            onDeleteReservation={deleteReservation}
           />
         );
       case 'rooms':
-        return <Rooms rooms={rooms} onUpdateRoom={updateRoom} onDeleteRoom={deleteRoom} />;
+        return <Rooms rooms={rooms} onAddRoom={addRoom} onUpdateRoom={updateRoom} onDeleteRoom={deleteRoom} />;
       case 'guests':
-        return <Guests guests={guests} />;
+        return <Guests guests={guests} onAddGuest={addGuest} onUpdateGuest={updateGuest} onDeleteGuest={deleteGuest} />;
       case 'reports':
         return <Reports reservations={reservations} rooms={rooms} guests={guests} />;
       case 'settings':

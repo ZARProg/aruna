@@ -192,6 +192,21 @@ function App() {
     }
   };
 
+  const updateRoom = (roomId: string, updatedRoom: Partial<Room>) => {
+    setRooms(prev => prev.map(room => 
+      room.id === roomId 
+        ? { ...room, ...updatedRoom }
+        : room
+    ));
+  };
+
+  const deleteRoom = (roomId: string) => {
+    setRooms(prev => prev.filter(room => room.id !== roomId));
+    
+    // Also remove any reservations for this room
+    setReservations(prev => prev.filter(reservation => reservation.roomId !== roomId));
+  };
+
   const renderActivePage = () => {
     switch (activePage) {
       case 'dashboard':
@@ -205,7 +220,7 @@ function App() {
           />
         );
       case 'rooms':
-        return <Rooms rooms={rooms} />;
+        return <Rooms rooms={rooms} onUpdateRoom={updateRoom} onDeleteRoom={deleteRoom} />;
       case 'guests':
         return <Guests guests={guests} />;
       case 'reports':
